@@ -32,7 +32,7 @@ public class MainApplication {
 @RestController
 class TestContainerd {
     @RequestMapping("test")
-    public String test() {
+    public String test(String nameSpace, String value) {
         try {
             // Create a new channel using Netty Native transport
             EventLoopGroup elg = new EpollEventLoopGroup();
@@ -47,11 +47,11 @@ class TestContainerd {
             // Since containerd requires a namespace to be specified when making a GRPC call, we will define a header with “containerd-namespace” key, set the value to our namespace
             Metadata header = new Metadata();
             Metadata.Key<String> key =
-                Metadata.Key.of("containerd-namespace", Metadata.ASCII_STRING_MARSHALLER);
-            header.put(key, "examplectr");
+                Metadata.Key.of(nameSpace, Metadata.ASCII_STRING_MARSHALLER);
+            header.put(key, value);// "examplectr"
             //Create the stub and attach the header created above
             ImagesGrpc.ImagesStub stub = ImagesGrpc.newStub(channel);
-//            stub = MetadataUtils.attachHeaders(stub, header);
+            stub = MetadataUtils.attachHeaders(stub, header);
             //Let’s build the ListImagesRequest with no filter
             ImagesOuterClass.ListImagesRequest request =
                 ImagesOuterClass.ListImagesRequest.newBuilder()
@@ -70,6 +70,7 @@ class TestContainerd {
                 // When response is received iterate over the Response and print the names of images
                 public void onNext(ImagesOuterClass.ListImagesResponse response) {
                     List<Image> images = response.getImagesList();
+                    System.out.printf("images size: %s%n",images.size());
                     for (int i = 0; i < images.size(); i++) {
                         System.out.println(i + " -" + images.get(i).getName());
                     }
@@ -77,11 +78,15 @@ class TestContainerd {
 
                 // if there is an error
                 public void onError(Throwable t) {
+
+                    System.out.printf("error la");
                     t.printStackTrace();
                 }
 
                 // when server completes the response and closes the stream shutdown our channel and EventLoopGroup
                 public void onCompleted() {
+
+                    System.out.printf("finished");
                     channel.shutdownNow();
                     elg.shutdownGracefully(50, 50, java.util.concurrent.TimeUnit.MILLISECONDS);
                 }
