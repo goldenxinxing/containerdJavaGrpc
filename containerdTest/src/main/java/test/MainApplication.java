@@ -10,6 +10,7 @@ import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.netty.channel.EventLoopGroup;
 import io.grpc.netty.shaded.io.netty.channel.epoll.EpollDomainSocketChannel;
 import io.grpc.netty.shaded.io.netty.channel.epoll.EpollEventLoopGroup;
+import io.grpc.netty.shaded.io.netty.channel.unix.DomainSocketAddress;
 import io.grpc.stub.MetadataUtils;
 import io.grpc.stub.StreamObserver;
 import java.util.List;
@@ -38,7 +39,7 @@ class TestContainerd {
             ManagedChannel channel = NettyChannelBuilder
                 .forAddress(
                     // todo 支持windows平台下能用
-                    new io.netty.channel.unix.DomainSocketAddress(
+                    new DomainSocketAddress(
                         "/run/containerd/containerd.sock")).eventLoopGroup(elg)
                 .channelType(EpollDomainSocketChannel.class)
                 .usePlaintext()
