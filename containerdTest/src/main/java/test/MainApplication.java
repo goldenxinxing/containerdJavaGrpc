@@ -73,7 +73,9 @@ class TestContainerd {
 
             ImagesOuterClass.CreateImageRequest createImageRequest =
                 ImagesOuterClass.CreateImageRequest.newBuilder()
-                    .mergeFrom(new FileInputStream(tarPath)) // 是否此处能够导入
+                    //.mergeFrom(new FileInputStream(tarPath)) // 是否此处能够导入
+                    //.getImageBuilder()
+                    .setImage(Image.newBuilder().setName("gxx-test").build())
                     .build();
 
             // Make the RPC Call
