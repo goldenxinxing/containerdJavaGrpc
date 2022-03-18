@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @SpringBootApplication
@@ -31,8 +32,9 @@ public class MainApplication {
 @Slf4j
 @RestController
 class TestContainerd {
+    private static final String namespace = "containerd-namespace";
     @RequestMapping("test")
-    public String test(String nameSpace, String value) {
+    public String test(@RequestParam(defaultValue = "default") String value) {
         try {
             // Create a new channel using Netty Native transport
             EventLoopGroup elg = new EpollEventLoopGroup();
@@ -47,7 +49,7 @@ class TestContainerd {
             // Since containerd requires a namespace to be specified when making a GRPC call, we will define a header with “containerd-namespace” key, set the value to our namespace
             Metadata header = new Metadata();
             Metadata.Key<String> key =
-                Metadata.Key.of(nameSpace, Metadata.ASCII_STRING_MARSHALLER);
+                Metadata.Key.of(namespace, Metadata.ASCII_STRING_MARSHALLER);
             header.put(key, value);// "examplectr"
             //Create the stub and attach the header created above
             ImagesGrpc.ImagesStub stub = ImagesGrpc.newStub(channel);
