@@ -52,11 +52,11 @@
             <artifactId>grpc-netty-shaded</artifactId>
             <version>1.45.0</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/io.netty/netty-all -->
+<!--        &lt;!&ndash; https://mvnrepository.com/artifact/io.netty/netty-all &ndash;&gt;
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
-        </dependency>
+        </dependency>-->
 
         <dependency>
             <groupId>io.grpc</groupId>

@@ -6,11 +6,12 @@ import containerd.services.images.v1.ImagesOuterClass.Image;
 import containerd.services.images.v1.ImagesOuterClass.ListImagesResponse;
 import io.grpc.ManagedChannel;
 import io.grpc.Metadata;
-import io.grpc.netty.NettyChannelBuilder;
+import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
+import io.grpc.netty.shaded.io.netty.channel.EventLoopGroup;
+import io.grpc.netty.shaded.io.netty.channel.epoll.EpollDomainSocketChannel;
+import io.grpc.netty.shaded.io.netty.channel.epoll.EpollEventLoopGroup;
 import io.grpc.stub.MetadataUtils;
 import io.grpc.stub.StreamObserver;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.epoll.EpollEventLoopGroup;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
@@ -39,7 +40,7 @@ class TestContainerd {
                     // todo 支持windows平台下能用
                     new io.netty.channel.unix.DomainSocketAddress(
                         "/run/containerd/containerd.sock")).eventLoopGroup(elg)
-                .channelType(io.netty.channel.epoll.EpollDomainSocketChannel.class)
+                .channelType(EpollDomainSocketChannel.class)
                 .usePlaintext()
                 .build();
             // Since containerd requires a namespace to be specified when making a GRPC call, we will define a header with “containerd-namespace” key, set the value to our namespace
