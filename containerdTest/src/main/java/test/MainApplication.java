@@ -51,7 +51,7 @@ class TestContainerd {
             header.put(key, "examplectr");
             //Create the stub and attach the header created above
             ImagesGrpc.ImagesStub stub = ImagesGrpc.newStub(channel);
-            stub = MetadataUtils.attachHeaders(stub, header);
+//            stub = MetadataUtils.attachHeaders(stub, header);
             //Let’s build the ListImagesRequest with no filter
             ImagesOuterClass.ListImagesRequest request =
                 ImagesOuterClass.ListImagesRequest.newBuilder()
