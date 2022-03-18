@@ -49,7 +49,7 @@
         </dependency>
         <dependency>
             <groupId>io.grpc</groupId>
-            <artifactId>grpc-netty</artifactId>
+            <artifactId>grpc-netty-shaded</artifactId>
             <version>1.45.0</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/io.netty/netty-all -->
