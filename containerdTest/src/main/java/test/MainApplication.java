@@ -14,6 +14,7 @@ import io.grpc.netty.shaded.io.netty.channel.epoll.EpollEventLoopGroup;
 import io.grpc.netty.shaded.io.netty.channel.unix.DomainSocketAddress;
 import io.grpc.stub.MetadataUtils;
 import io.grpc.stub.StreamObserver;
+import java.io.File;
 import java.io.FileInputStream;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -62,6 +63,13 @@ class TestContainerd {
             ImagesGrpc.ImagesStub stub = ImagesGrpc.newStub(channel);
             stub = MetadataUtils.attachHeaders(stub, header);
             //Let’s build the ListImagesRequest with no filter
+
+            File file = new File(tarPath);
+            if( file.exists() ) {
+                log.info("exist:{}", file.getAbsolutePath());
+            } else {
+                log.error("{} not exist", tarPath);
+            }
 
             ImagesOuterClass.CreateImageRequest createImageRequest =
                 ImagesOuterClass.CreateImageRequest.newBuilder()
