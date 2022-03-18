@@ -55,7 +55,6 @@ class TestContainerd {
             //Let’s build the ListImagesRequest with no filter
             ImagesOuterClass.ListImagesRequest request =
                 ImagesOuterClass.ListImagesRequest.newBuilder()
-                    .addFilters("")
                     .build();
             System.out.println(" ==============================================================");
             System.out.println("IMAGE\n == ==========");
