@@ -47,7 +47,7 @@ class TestContainerd {
             // Since containerd requires a namespace to be specified when making a GRPC call, we will define a header with “containerd-namespace” key, set the value to our namespace
             Metadata header = new Metadata();
             Metadata.Key<String> key =
-                Metadata.Key.of("containerd - namespace", Metadata.ASCII_STRING_MARSHALLER);
+                Metadata.Key.of("containerd-namespace", Metadata.ASCII_STRING_MARSHALLER);
             header.put(key, "examplectr");
             //Create the stub and attach the header created above
             ImagesGrpc.ImagesStub stub = ImagesGrpc.newStub(channel);
