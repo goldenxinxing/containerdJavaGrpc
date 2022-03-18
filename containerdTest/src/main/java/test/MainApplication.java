@@ -41,6 +41,7 @@ class TestContainerd {
     @RequestMapping("import")
     public String importImage(@RequestParam() String tarPath) {
         try {
+            log.info("path: {}", tarPath);
             // Create a new channel using Netty Native transport
             EventLoopGroup elg = new EpollEventLoopGroup();
             ManagedChannel channel = NettyChannelBuilder
