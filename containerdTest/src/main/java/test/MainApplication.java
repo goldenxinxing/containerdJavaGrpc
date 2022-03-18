@@ -2,9 +2,11 @@ package test;
 
 import containerd.services.images.v1.ImagesGrpc;
 import containerd.services.images.v1.ImagesOuterClass;
+import containerd.services.images.v1.ImagesOuterClass.CreateImageRequest;
 import containerd.services.images.v1.ImagesOuterClass.CreateImageResponse;
 import containerd.services.images.v1.ImagesOuterClass.Image;
 import containerd.services.images.v1.ImagesOuterClass.ListImagesResponse;
+import containerd.types.DescriptorOuterClass.Descriptor;
 import io.grpc.ManagedChannel;
 import io.grpc.Metadata;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
@@ -65,17 +67,21 @@ class TestContainerd {
             //Let’s build the ListImagesRequest with no filter
 
             File file = new File(tarPath);
-            if( file.exists() ) {
+            if (file.exists()) {
                 log.info("exist:{}", file.getAbsolutePath());
             } else {
                 log.error("{} not exist", tarPath);
             }
 
             ImagesOuterClass.CreateImageRequest createImageRequest =
-                ImagesOuterClass.CreateImageRequest.newBuilder()
+                CreateImageRequest.newBuilder()
                     //.mergeFrom(new FileInputStream(tarPath)) // 是否此处能够导入
                     //.getImageBuilder()
-                    .setImage(Image.newBuilder().setName("gxx-test").build())
+                    .setImage(Image.newBuilder()
+                        .setName("gxx-test")
+                        .setTarget(
+                            Descriptor.newBuilder().setDigest("123456").setSize(1000).build()
+                        ).build())
                     .build();
 
             // Make the RPC Call
