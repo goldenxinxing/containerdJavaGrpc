@@ -24,3 +24,4 @@ hs_err_pid*
 **.iml
 /containerd-build/tmp/
 /.idea/
+/containerdTest/tmp/containerd_protos/github.com/containerd/containerd/

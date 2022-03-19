@@ -1,0 +1,3 @@
+- (only when need update protobuf code)gogoproto dir from gogo/protobuf,youcan exec this cmd
+  - git clone https://github.com/gogo/protobuf.git
+  - copy protobuf/gogoproto to this dir
