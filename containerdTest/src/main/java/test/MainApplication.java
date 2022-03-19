@@ -137,8 +137,10 @@ class TestContainerd {
                                     ContainersOuterClass.Container.newBuilder()
                                             .setImage(imageName)
                                             .setId("gxx-test")
+                                            .setRuntime(ContainersOuterClass.Container.Runtime.newBuilder().setName("runtime-name-gxx").build())
                                             .build()
-                            ).build();
+                            )
+                            .build();
 
             // Make the RPC Call
             stub.create(request, new StreamObserver<>() {
