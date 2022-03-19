@@ -1,5 +1,7 @@
 package test;
 
+import containerd.services.containers.v1.ContainersGrpc;
+import containerd.services.containers.v1.ContainersOuterClass;
 import containerd.services.images.v1.ImagesGrpc;
 import containerd.services.images.v1.ImagesOuterClass;
 import containerd.services.images.v1.ImagesOuterClass.CreateImageRequest;
@@ -43,9 +45,8 @@ class TestContainerd {
 
 
     @GetMapping("image/create")
-    public String createImage(@RequestParam() String tarPath) {
+    public String createImage() {
         try {
-            log.info("path: {}", tarPath);
             // Create a new channel using Netty Native transport
             EventLoopGroup elg = new EpollEventLoopGroup();
             ManagedChannel channel = NettyChannelBuilder
@@ -92,6 +93,69 @@ class TestContainerd {
                 @Override
                 public void onCompleted() {
                     log.info("import finished");
+                    channel.shutdownNow();
+                    elg.shutdownGracefully(50, 50, java.util.concurrent.TimeUnit.MILLISECONDS);
+                }
+            });
+
+            return "success";
+        } catch (Throwable e) {
+            log.error(e.getMessage());
+            e.printStackTrace();
+            return e.getMessage();
+        }
+
+    }
+
+    @GetMapping("container/create")
+    public String createContainer(String imageName) {
+        try {
+            // Create a new channel using Netty Native transport
+            EventLoopGroup elg = new EpollEventLoopGroup();
+            ManagedChannel channel = NettyChannelBuilder
+                .forAddress(
+                    // todo 支持windows平台下能用
+                    new DomainSocketAddress(
+                        "/run/containerd/containerd.sock")).eventLoopGroup(elg)
+                .channelType(EpollDomainSocketChannel.class)
+                .usePlaintext()
+                .build();
+
+            // Since containerd requires a namespace to be specified when making a GRPC call, we will define a header with “containerd-namespace” key, set the value to our namespace
+            Metadata header = new Metadata();
+            Metadata.Key<String> key =
+                Metadata.Key.of(namespace, Metadata.ASCII_STRING_MARSHALLER);
+            header.put(key, "default");// "examplectr"
+            //Create the stub and attach the header created above
+            ContainersGrpc.ContainersStub stub = ContainersGrpc.newStub(channel);
+            stub = MetadataUtils.attachHeaders(stub, header);
+            //Let’s build the ListImagesRequest with no filter
+
+            ContainersOuterClass.CreateContainerRequest request =
+                    ContainersOuterClass.CreateContainerRequest.newBuilder()
+                            .setContainer(
+                                    ContainersOuterClass.Container.newBuilder()
+                                            .setImage(imageName)
+                                            .build()
+                            ).build();
+
+            // Make the RPC Call
+            stub.create(request, new StreamObserver<>() {
+                @Override
+                public void onNext(ContainersOuterClass.CreateContainerResponse value) {
+                    log.info(String.format("container: %s, image:%s", value.getContainer(), value.getContainer().getImage()));
+                }
+
+
+                @Override
+                public void onError(Throwable t) {
+                    log.error("create container error!");
+                    t.printStackTrace();
+                }
+
+                @Override
+                public void onCompleted() {
+                    log.info("create container finished");
                     channel.shutdownNow();
                     elg.shutdownGracefully(50, 50, java.util.concurrent.TimeUnit.MILLISECONDS);
                 }
