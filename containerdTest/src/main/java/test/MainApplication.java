@@ -136,6 +136,7 @@ class TestContainerd {
                             .setContainer(
                                     ContainersOuterClass.Container.newBuilder()
                                             .setImage(imageName)
+                                            .setId("gxx-test")
                                             .build()
                             ).build();
 
