@@ -1,5 +1,6 @@
 package test;
 
+import com.google.protobuf.Any;
 import containerd.services.containers.v1.ContainersGrpc;
 import containerd.services.containers.v1.ContainersOuterClass;
 import containerd.services.images.v1.ImagesGrpc;
@@ -138,6 +139,7 @@ class TestContainerd {
                                             .setImage(imageName)
                                             .setId("gxx-test")
                                             .setRuntime(ContainersOuterClass.Container.Runtime.newBuilder().setName("runtime-name-gxx").build())
+                                            .setSpec(Any.newBuilder().build())
                                             .build()
                             )
                             .build();
