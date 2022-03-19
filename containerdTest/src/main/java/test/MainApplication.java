@@ -22,6 +22,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -41,8 +42,8 @@ class TestContainerd {
     private static final String namespace = "containerd-namespace";
 
 
-    @RequestMapping("import")
-    public String importImage(@RequestParam() String tarPath) {
+    @GetMapping("image/create")
+    public String createImage(@RequestParam() String tarPath) {
         try {
             log.info("path: {}", tarPath);
             // Create a new channel using Netty Native transport
@@ -66,17 +67,8 @@ class TestContainerd {
             stub = MetadataUtils.attachHeaders(stub, header);
             //Let’s build the ListImagesRequest with no filter
 
-            File file = new File(tarPath);
-            if (file.exists()) {
-                log.info("exist:{}", file.getAbsolutePath());
-            } else {
-                log.error("{} not exist", tarPath);
-            }
-
             ImagesOuterClass.CreateImageRequest createImageRequest =
                 CreateImageRequest.newBuilder()
-                    //.mergeFrom(new FileInputStream(tarPath)) // 是否此处能够导入
-                    //.getImageBuilder()
                     .setImage(Image.newBuilder()
                         .setName("gxx-test")
                         .setTarget(
@@ -114,8 +106,8 @@ class TestContainerd {
 
     }
 
-    @RequestMapping("test")
-    public String test(@RequestParam(defaultValue = "default") String value) {
+    @GetMapping("image/list")
+    public String listImage(@RequestParam(defaultValue = "default") String value) {
         try {
             // Create a new channel using Netty Native transport
             EventLoopGroup elg = new EpollEventLoopGroup();
