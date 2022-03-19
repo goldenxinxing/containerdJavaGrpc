@@ -74,7 +74,7 @@ class TestContainerd {
             stub = MetadataUtils.attachHeaders(stub, header);
             //Let’s build the ListImagesRequest with no filter
 
-            TasksOuterClass.StartRequest request = TasksOuterClass.StartRequest.newBuilder()
+            TasksOuterClass.CreateTaskRequest request = TasksOuterClass.CreateTaskRequest.newBuilder()
                     .setContainerId(containerId)
                     .build();
 
