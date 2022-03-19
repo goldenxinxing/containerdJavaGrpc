@@ -1,6 +1,7 @@
 package test;
 
 import com.google.protobuf.Any;
+import com.google.protobuf.Descriptors;
 import containerd.services.containers.v1.ContainersGrpc;
 import containerd.services.containers.v1.ContainersOuterClass;
 import containerd.services.images.v1.ImagesGrpc;
@@ -9,6 +10,8 @@ import containerd.services.images.v1.ImagesOuterClass.CreateImageRequest;
 import containerd.services.images.v1.ImagesOuterClass.CreateImageResponse;
 import containerd.services.images.v1.ImagesOuterClass.Image;
 import containerd.services.images.v1.ImagesOuterClass.ListImagesResponse;
+import containerd.services.tasks.v1.TasksGrpc;
+import containerd.services.tasks.v1.TasksOuterClass;
 import containerd.types.DescriptorOuterClass.Descriptor;
 import io.grpc.ManagedChannel;
 import io.grpc.Metadata;
@@ -45,8 +48,10 @@ class TestContainerd {
     private static final String namespace = "containerd-namespace";
 
 
-    @GetMapping("image/create")
-    public String createImage() {
+
+
+    @GetMapping("container/run")
+    public String runContainer(String containerId) {
         try {
             // Create a new channel using Netty Native transport
             EventLoopGroup elg = new EpollEventLoopGroup();
@@ -65,35 +70,31 @@ class TestContainerd {
                 Metadata.Key.of(namespace, Metadata.ASCII_STRING_MARSHALLER);
             header.put(key, "default");// "examplectr"
             //Create the stub and attach the header created above
-            ImagesGrpc.ImagesStub stub = ImagesGrpc.newStub(channel);
+            TasksGrpc.TasksStub stub = TasksGrpc.newStub(channel);
             stub = MetadataUtils.attachHeaders(stub, header);
             //Let’s build the ListImagesRequest with no filter
 
-            ImagesOuterClass.CreateImageRequest createImageRequest =
-                CreateImageRequest.newBuilder()
-                    .setImage(Image.newBuilder()
-                        .setName("gxx-test")
-                        .setTarget(
-                            Descriptor.newBuilder().setDigest("123456").setSize(1000).build()
-                        ).build())
+            TasksOuterClass.StartRequest request = TasksOuterClass.StartRequest.newBuilder()
+                    .setContainerId(containerId)
                     .build();
 
             // Make the RPC Call
-            stub.create(createImageRequest, new StreamObserver<>() {
+            stub.create(request, new StreamObserver<>() {
+
                 @Override
-                public void onNext(CreateImageResponse value) {
-                    log.info(String.format("image: %s", value.getImage()));
+                public void onNext(TasksOuterClass.CreateTaskResponse value) {
+                    log.info(String.format("container: %s, image:%s", value.getContainer(), value.getContainer().getImage()));
                 }
 
                 @Override
                 public void onError(Throwable t) {
-                    log.error("list error!");
+                    log.error("create container error!");
                     t.printStackTrace();
                 }
 
                 @Override
                 public void onCompleted() {
-                    log.info("import finished");
+                    log.info("create container finished");
                     channel.shutdownNow();
                     elg.shutdownGracefully(50, 50, java.util.concurrent.TimeUnit.MILLISECONDS);
                 }
@@ -107,7 +108,6 @@ class TestContainerd {
         }
 
     }
-
     @GetMapping("container/create")
     public String createContainer(String imageName, String containerId, String runtimeName) {
         try {
@@ -138,7 +138,9 @@ class TestContainerd {
                                     ContainersOuterClass.Container.newBuilder()
                                             .setImage(imageName)
                                             .setId(containerId)
-                                            .setRuntime(ContainersOuterClass.Container.Runtime.newBuilder().setName(runtimeName).build())
+                                            .setRuntime(ContainersOuterClass.Container.Runtime.newBuilder()
+                                                    .setName(runtimeName)
+                                                    .build())
                                             .setSpec(Any.newBuilder().build())
                                             .build()
                             )
@@ -174,7 +176,68 @@ class TestContainerd {
         }
 
     }
+    @GetMapping("image/create")
+    public String createImage() {
+        try {
+            // Create a new channel using Netty Native transport
+            EventLoopGroup elg = new EpollEventLoopGroup();
+            ManagedChannel channel = NettyChannelBuilder
+                    .forAddress(
+                            // todo 支持windows平台下能用
+                            new DomainSocketAddress(
+                                    "/run/containerd/containerd.sock")).eventLoopGroup(elg)
+                    .channelType(EpollDomainSocketChannel.class)
+                    .usePlaintext()
+                    .build();
 
+            // Since containerd requires a namespace to be specified when making a GRPC call, we will define a header with “containerd-namespace” key, set the value to our namespace
+            Metadata header = new Metadata();
+            Metadata.Key<String> key =
+                    Metadata.Key.of(namespace, Metadata.ASCII_STRING_MARSHALLER);
+            header.put(key, "default");// "examplectr"
+            //Create the stub and attach the header created above
+            ImagesGrpc.ImagesStub stub = ImagesGrpc.newStub(channel);
+            stub = MetadataUtils.attachHeaders(stub, header);
+            //Let’s build the ListImagesRequest with no filter
+
+            ImagesOuterClass.CreateImageRequest createImageRequest =
+                    CreateImageRequest.newBuilder()
+                            .setImage(Image.newBuilder()
+                                    .setName("gxx-test")
+                                    .setTarget(
+                                            Descriptor.newBuilder().setDigest("123456").setSize(1000).build()
+                                    ).build())
+                            .build();
+
+            // Make the RPC Call
+            stub.create(createImageRequest, new StreamObserver<>() {
+                @Override
+                public void onNext(CreateImageResponse value) {
+                    log.info(String.format("image: %s", value.getImage()));
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                    log.error("list error!");
+                    t.printStackTrace();
+                }
+
+                @Override
+                public void onCompleted() {
+                    log.info("import finished");
+                    channel.shutdownNow();
+                    elg.shutdownGracefully(50, 50, java.util.concurrent.TimeUnit.MILLISECONDS);
+                }
+            });
+
+            return "success";
+        } catch (Throwable e) {
+            log.error(e.getMessage());
+            e.printStackTrace();
+            return e.getMessage();
+        }
+
+    }
     @GetMapping("image/list")
     public String listImage(@RequestParam(defaultValue = "default") String value) {
         try {
