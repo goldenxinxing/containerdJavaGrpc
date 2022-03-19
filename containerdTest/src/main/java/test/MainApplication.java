@@ -83,7 +83,7 @@ class TestContainerd {
 
                 @Override
                 public void onNext(TasksOuterClass.CreateTaskResponse value) {
-                    log.info(String.format("container: %s, image:%s", value.getContainer(), value.getContainer().getImage()));
+                    log.info(String.format("containerId: %s, id:%s", value.getContainerId(), value.getPid()));
                 }
 
                 @Override
