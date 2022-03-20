@@ -154,7 +154,7 @@ class TestContainerd {
                                                     .build())
                                             .setSnapshotKey(snapshotkey)
                                             .setSnapshotter(snapshotter)
-                                            .setSpec(Any.newBuilder())
+                                            //.setSpec(Any.newBuilder())
                                             .build()
                             )
                             .build();
