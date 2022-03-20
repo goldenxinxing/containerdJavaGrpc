@@ -118,7 +118,7 @@ class TestContainerd {
      * @return
      */
     @GetMapping("container/create")
-    public String createContainer(String imageName, String containerId, String runtimeName) {
+    public String createContainer(String imageName, String containerId, String runtimeName, String snapshotkey, String snapshotter) {
         try {
             // Create a new channel using Netty Native transport
             EventLoopGroup elg = new EpollEventLoopGroup();
@@ -152,7 +152,8 @@ class TestContainerd {
                                             .setRuntime(ContainersOuterClass.Container.Runtime.newBuilder()
                                                     .setName(runtimeName)
                                                     .build())
-                                            .setSnapshotKey("test")
+                                            .setSnapshotKey(snapshotkey)
+                                            .setSnapshotter(snapshotter)
 
                                             .setSpec(Any.newBuilder().build())
                                             .build()
