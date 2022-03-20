@@ -88,13 +88,13 @@ class TestContainerd {
 
                 @Override
                 public void onError(Throwable t) {
-                    log.error("create container error!");
+                    log.error("run container error!");
                     t.printStackTrace();
                 }
 
                 @Override
                 public void onCompleted() {
-                    log.info("create container finished");
+                    log.info("run container finished");
                     channel.shutdownNow();
                     elg.shutdownGracefully(50, 50, java.util.concurrent.TimeUnit.MILLISECONDS);
                 }
