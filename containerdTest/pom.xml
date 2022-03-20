@@ -123,6 +123,10 @@
                         <include>
                             github.com/containerd/containerd/api/types/*.proto
                         </include>
+                        <!--content-->
+                        <include>
+                            github.com/containerd/containerd/api/services/content/v1/*.proto
+                        </include>
                         <!--task-->
                         <include>
                             github.com/containerd/containerd/api/services/tasks/v1/*.proto

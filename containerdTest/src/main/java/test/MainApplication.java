@@ -13,6 +13,7 @@ import containerd.services.images.v1.ImagesOuterClass.ListImagesResponse;
 import containerd.services.tasks.v1.TasksGrpc;
 import containerd.services.tasks.v1.TasksOuterClass;
 import containerd.types.DescriptorOuterClass.Descriptor;
+import io.grpc.CallOptions;
 import io.grpc.ManagedChannel;
 import io.grpc.Metadata;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
@@ -108,6 +109,14 @@ class TestContainerd {
         }
 
     }
+
+    /**
+     * sudo ctr containers create -t --env test=gg --net-host docker.io/library/gxx-java-image:latest m2
+     * @param imageName
+     * @param containerId
+     * @param runtimeName
+     * @return
+     */
     @GetMapping("container/create")
     public String createContainer(String imageName, String containerId, String runtimeName) {
         try {
@@ -127,6 +136,8 @@ class TestContainerd {
             Metadata.Key<String> key =
                 Metadata.Key.of(namespace, Metadata.ASCII_STRING_MARSHALLER);
             header.put(key, "default");// "examplectr"
+            Metadata.Key<String> env = Metadata.Key.of("--env", Metadata.ASCII_STRING_MARSHALLER);
+            header.put(env, "test=gg");
             //Create the stub and attach the header created above
             ContainersGrpc.ContainersStub stub = ContainersGrpc.newStub(channel);
             stub = MetadataUtils.attachHeaders(stub, header);
@@ -141,11 +152,13 @@ class TestContainerd {
                                             .setRuntime(ContainersOuterClass.Container.Runtime.newBuilder()
                                                     .setName(runtimeName)
                                                     .build())
+                                            .setSnapshotKey("test")
+
                                             .setSpec(Any.newBuilder().build())
                                             .build()
                             )
                             .build();
-
+            stub = stub.withOption(CallOptions.Key.createWithDefault("env", "test=gxx"), "gxx2");
             // Make the RPC Call
             stub.create(request, new StreamObserver<>() {
                 @Override
