@@ -4,6 +4,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.HostConfig;
+import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
@@ -18,21 +19,22 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RestController
 public class DockerJava {
+
     @GetMapping("test")
     public String test() {
         DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
         DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
-                .dockerHost(config.getDockerHost())
-                .sslConfig(config.getSSLConfig())
-                .maxConnections(100)
-                .connectionTimeout(Duration.ofSeconds(30))
-                .responseTimeout(Duration.ofSeconds(45))
-                .build();
+            .dockerHost(config.getDockerHost())
+            .sslConfig(config.getSSLConfig())
+            .maxConnections(100)
+            .connectionTimeout(Duration.ofSeconds(30))
+            .responseTimeout(Duration.ofSeconds(45))
+            .build();
 
         DockerHttpClient.Request request = DockerHttpClient.Request.builder()
-                .method(DockerHttpClient.Request.Method.GET)
-                .path("/_ping")
-                .build();
+            .method(DockerHttpClient.Request.Method.GET)
+            .path("/_ping")
+            .build();
 
         try (DockerHttpClient.Response response = httpClient.execute(request)) {
             if (response.getStatusCode() == 200) {
@@ -43,7 +45,6 @@ public class DockerJava {
             }
         }
 
-
         DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
         dockerClient.pingCmd().exec();
         return "success";
@@ -53,16 +54,23 @@ public class DockerJava {
     public String startContainer(String image, int port) {
         DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
         DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
-                .dockerHost(config.getDockerHost())
-                .sslConfig(config.getSSLConfig())
-                .maxConnections(100)
-                .connectionTimeout(Duration.ofSeconds(30))
-                .responseTimeout(Duration.ofSeconds(45))
-                .build();
+            .dockerHost(config.getDockerHost())
+            .sslConfig(config.getSSLConfig())
+            .maxConnections(100)
+            .connectionTimeout(Duration.ofSeconds(30))
+            .responseTimeout(Duration.ofSeconds(45))
+            .build();
 
         DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
-        CreateContainerResponse response = dockerClient.createContainerCmd(image).withExposedPorts(ExposedPort.tcp(port)).withHostConfig(
-            HostConfig.newHostConfig().withNetworkMode("host")).exec();
+        CreateContainerResponse response = dockerClient.createContainerCmd(image)
+            .withExposedPorts(ExposedPort.tcp(port))
+            .withHostConfig(
+                HostConfig.newHostConfig()
+                    .withNetworkMode("host")
+                    .withPortBindings(PortBinding.parse(String.format("%s:%s",port, port)))
+                    .withDevices()
+            )
+            .exec();
         log.info("container id:{}", response.getId());
         return response.getId();
     }
