@@ -9,10 +9,14 @@ import com.github.dockerjava.transport.DockerHttpClient;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
+@RestController
 public class DockerJava {
-    public static void main(String[] args) {
+    @GetMapping("test")
+    public String test() {
         DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
         DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
                 .dockerHost(config.getDockerHost())
@@ -39,5 +43,6 @@ public class DockerJava {
 
         DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
         dockerClient.pingCmd().exec();
+        return "success";
     }
 }
