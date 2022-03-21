@@ -50,8 +50,8 @@ public class DockerJava {
         return "success";
     }
 
-    @GetMapping("startContainer")
-    public String startContainer(String image, int port) {
+    @GetMapping("createContainer")
+    public String createContainer(String image, int port) {
         DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
         DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
             .dockerHost(config.getDockerHost())
@@ -73,5 +73,22 @@ public class DockerJava {
             .exec();
         log.info("container id:{}", response.getId());
         return response.getId();
+    }
+
+    @GetMapping("startContainer")
+    public String startContainer(String containerId) {
+        DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
+        DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
+            .dockerHost(config.getDockerHost())
+            .sslConfig(config.getSSLConfig())
+            .maxConnections(100)
+            .connectionTimeout(Duration.ofSeconds(30))
+            .responseTimeout(Duration.ofSeconds(45))
+            .build();
+
+        DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
+        log.info("start container id:{}", containerId);
+        dockerClient.startContainerCmd(containerId).exec();
+        return "success";
     }
 }
