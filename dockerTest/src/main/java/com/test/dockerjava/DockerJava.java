@@ -1,15 +1,19 @@
 package com.test.dockerjava;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.PortBinding;
+import com.github.dockerjava.api.model.Statistics;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import com.github.dockerjava.transport.DockerHttpClient;
+import java.io.Closeable;
+import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
@@ -89,6 +93,48 @@ public class DockerJava {
         DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
         log.info("start container id:{}", containerId);
         dockerClient.startContainerCmd(containerId).exec();
+        return "success";
+    }
+
+    @GetMapping("statusOfContainer")
+    public String statusOfContainer(String containerId) {
+        DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
+        DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
+            .dockerHost(config.getDockerHost())
+            .sslConfig(config.getSSLConfig())
+            .maxConnections(100)
+            .connectionTimeout(Duration.ofSeconds(30))
+            .responseTimeout(Duration.ofSeconds(45))
+            .build();
+
+        DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
+        log.info("status of container id:{}", containerId);
+        dockerClient.statsCmd(containerId).exec(new ResultCallback<Statistics>() {
+            @Override
+            public void onStart(Closeable closeable) {
+                log.info("status start");
+            }
+
+            @Override
+            public void onNext(Statistics object) {
+                log.info("status of pid:{}",object.getPidsStats());
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+
+            }
+
+            @Override
+            public void onComplete() {
+                log.info("status cmd complete");
+            }
+
+            @Override
+            public void close() throws IOException {
+                log.info("status cmd close");
+            }
+        });
         return "success";
     }
 }
