@@ -117,7 +117,7 @@ public class DockerJava {
 
             @Override
             public void onNext(Statistics object) {
-                log.info("status of pid:{}",object.getPidsStats());
+                log.info("status of pid:{}",object.getPidsStats().getCurrent());
             }
 
             @Override
