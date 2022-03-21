@@ -3,6 +3,7 @@ package com.test.dockerjava;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
@@ -45,7 +46,6 @@ public class DockerJava {
 
         DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
         dockerClient.pingCmd().exec();
-        dockerClient.createContainerCmd("").withExposedPorts(ExposedPort.tcp(18080)).exec();
         return "success";
     }
 
@@ -61,7 +61,8 @@ public class DockerJava {
                 .build();
 
         DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
-        CreateContainerResponse response = dockerClient.createContainerCmd(image).withExposedPorts(ExposedPort.tcp(port)).exec();
+        CreateContainerResponse response = dockerClient.createContainerCmd(image).withExposedPorts(ExposedPort.tcp(port)).withHostConfig(
+            HostConfig.newHostConfig().withNetworkMode("host")).exec();
         log.info("container id:{}", response.getId());
         return response.getId();
     }
