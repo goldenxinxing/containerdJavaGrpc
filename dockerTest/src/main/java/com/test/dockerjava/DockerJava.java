@@ -1,10 +1,14 @@
 package com.test.dockerjava;
 
+import cn.hutool.json.JSONUtil;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.HostConfig;
+import com.github.dockerjava.api.model.Image;
+import com.github.dockerjava.api.model.Info;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Statistics;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
@@ -13,10 +17,15 @@ import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import com.github.dockerjava.transport.DockerHttpClient;
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryUsage;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
+import nonapi.io.github.classgraph.json.JSONUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,8 +33,41 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class DockerJava {
 
-    @GetMapping("test")
-    public String test() {
+    @GetMapping("jvmUsage")
+    public String usage() {
+        /* Total number of processors or cores available to the JVM */
+        System.out.println("Available processors (cores): " +
+            Runtime.getRuntime().availableProcessors());
+
+        /* Total amount of free memory available to the JVM */
+        System.out.println("Free memory (bytes): " +
+            Runtime.getRuntime().freeMemory());
+
+        /* This will return Long.MAX_VALUE if there is no preset limit */
+        long maxMemory = Runtime.getRuntime().maxMemory();
+        /* Maximum amount of memory the JVM will attempt to use */
+        System.out.println("Maximum memory (bytes): " +
+            (maxMemory == Long.MAX_VALUE ? "no limit" : maxMemory));
+
+        /* Total memory currently in use by the JVM */
+        System.out.println("Total memory (bytes): " +
+            Runtime.getRuntime().totalMemory());
+
+        /* Get a list of all filesystem roots on this system */
+        File[] roots = File.listRoots();
+
+        /* For each filesystem root, print some info */
+        for (File root : roots) {
+            System.out.println("File system root: " + root.getAbsolutePath());
+            System.out.println("Total space (bytes): " + root.getTotalSpace());
+            System.out.println("Free space (bytes): " + root.getFreeSpace());
+            System.out.println("Usable space (bytes): " + root.getUsableSpace());
+        }
+        return "success";
+    }
+
+    @GetMapping("info")
+    public Info info() {
         DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
         DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
             .dockerHost(config.getDockerHost())
@@ -44,14 +86,46 @@ public class DockerJava {
             if (response.getStatusCode() == 200) {
                 log.info("success");
             }
-            if ("OK".equals(response.getBody())) {
-                log.info("OK");
-            }
+            log.info(String.valueOf(response.getBody()));
         }
 
         DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
-        dockerClient.pingCmd().exec();
-        return "success";
+        return dockerClient.infoCmd().exec();
+    }
+
+    @GetMapping("listImage")
+    public List<Image> listImage() {
+        DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
+        DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
+            .dockerHost(config.getDockerHost())
+            .sslConfig(config.getSSLConfig())
+            .maxConnections(100)
+            .connectionTimeout(Duration.ofSeconds(30))
+            .responseTimeout(Duration.ofSeconds(45))
+            .build();
+
+        DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
+        List<Image> imageList = dockerClient.listImagesCmd().exec();
+        for (Image image : imageList) {
+            log.info("imageId:{}", image.getId());
+        }
+        return imageList;
+    }
+
+    @GetMapping("listContainer")
+    public List<Container> listContainer() {
+        DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
+        DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
+            .dockerHost(config.getDockerHost())
+            .sslConfig(config.getSSLConfig())
+            .maxConnections(100)
+            .connectionTimeout(Duration.ofSeconds(30))
+            .responseTimeout(Duration.ofSeconds(45))
+            .build();
+
+        DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
+
+        return dockerClient.listContainersCmd().exec();
     }
 
     @GetMapping("createContainer")
@@ -71,7 +145,7 @@ public class DockerJava {
             .withHostConfig(
                 HostConfig.newHostConfig()
                     .withNetworkMode("host")
-                    .withPortBindings(PortBinding.parse(String.format("%s:%s",port, port)))
+                    .withPortBindings(PortBinding.parse(String.format("%s:%s", port, port)))
                     .withDevices()
             )
             .exec();
@@ -116,8 +190,8 @@ public class DockerJava {
             }
 
             @Override
-            public void onNext(Statistics object) {
-                log.info("status of pid:{}",object.getPidsStats().getCurrent());
+            public void onNext(Statistics statistics) {
+                log.info("status of id:{}, info:{}", containerId, JSONUtil.toJsonStr(statistics));
             }
 
             @Override
