@@ -7,3 +7,4 @@
 - GPU 相关
   - cuda 和 gpu关系？
   - 如何在docker-client中配置gpu quota？
+  - 如何获取nvidia gpu信息：https://blog.csdn.net/qq_36874177/article/details/109534115
