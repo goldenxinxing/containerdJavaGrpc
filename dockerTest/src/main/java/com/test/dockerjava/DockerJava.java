@@ -4,7 +4,10 @@ import cn.hutool.json.JSONUtil;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.Event;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.Image;
@@ -19,19 +22,20 @@ import com.github.dockerjava.transport.DockerHttpClient;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryUsage;
-import java.util.List;
-import lombok.extern.slf4j.Slf4j;
-
 import java.time.Duration;
-import nonapi.io.github.classgraph.json.JSONUtils;
+import java.util.List;
+import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
 public class DockerJava {
+
+    @Autowired
+    private DockerClient dockerClient;
 
     @GetMapping("jvmUsage")
     public String usage() {
@@ -68,43 +72,11 @@ public class DockerJava {
 
     @GetMapping("info")
     public Info info() {
-        DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
-        DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
-            .dockerHost(config.getDockerHost())
-            .sslConfig(config.getSSLConfig())
-            .maxConnections(100)
-            .connectionTimeout(Duration.ofSeconds(30))
-            .responseTimeout(Duration.ofSeconds(45))
-            .build();
-
-        DockerHttpClient.Request request = DockerHttpClient.Request.builder()
-            .method(DockerHttpClient.Request.Method.GET)
-            .path("/_ping")
-            .build();
-
-        try (DockerHttpClient.Response response = httpClient.execute(request)) {
-            if (response.getStatusCode() == 200) {
-                log.info("success");
-            }
-            log.info(String.valueOf(response.getBody()));
-        }
-
-        DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
         return dockerClient.infoCmd().exec();
     }
 
     @GetMapping("listImage")
     public List<Image> listImage() {
-        DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
-        DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
-            .dockerHost(config.getDockerHost())
-            .sslConfig(config.getSSLConfig())
-            .maxConnections(100)
-            .connectionTimeout(Duration.ofSeconds(30))
-            .responseTimeout(Duration.ofSeconds(45))
-            .build();
-
-        DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
         List<Image> imageList = dockerClient.listImagesCmd().exec();
         for (Image image : imageList) {
             log.info("imageId:{}", image.getId());
@@ -114,32 +86,12 @@ public class DockerJava {
 
     @GetMapping("listContainer")
     public List<Container> listContainer() {
-        DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
-        DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
-            .dockerHost(config.getDockerHost())
-            .sslConfig(config.getSSLConfig())
-            .maxConnections(100)
-            .connectionTimeout(Duration.ofSeconds(30))
-            .responseTimeout(Duration.ofSeconds(45))
-            .build();
-
-        DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
-
-        return dockerClient.listContainersCmd().exec();
+        return dockerClient.listContainersCmd().withShowAll(true).exec();
     }
 
     @GetMapping("createContainer")
     public String createContainer(String image, int port) {
-        DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
-        DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
-            .dockerHost(config.getDockerHost())
-            .sslConfig(config.getSSLConfig())
-            .maxConnections(100)
-            .connectionTimeout(Duration.ofSeconds(30))
-            .responseTimeout(Duration.ofSeconds(45))
-            .build();
 
-        DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
         CreateContainerResponse response = dockerClient.createContainerCmd(image)
             .withExposedPorts(ExposedPort.tcp(port))
             .withHostConfig(
@@ -148,6 +100,7 @@ public class DockerJava {
                     .withPortBindings(PortBinding.parse(String.format("%s:%s", port, port)))
                     .withDevices()
             )
+            .withLabels(Map.of("taskId", "123456"))
             .exec();
         log.info("container id:{}", response.getId());
         return response.getId();
@@ -155,16 +108,7 @@ public class DockerJava {
 
     @GetMapping("startContainer")
     public String startContainer(String containerId) {
-        DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
-        DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
-            .dockerHost(config.getDockerHost())
-            .sslConfig(config.getSSLConfig())
-            .maxConnections(100)
-            .connectionTimeout(Duration.ofSeconds(30))
-            .responseTimeout(Duration.ofSeconds(45))
-            .build();
 
-        DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
         log.info("start container id:{}", containerId);
         dockerClient.startContainerCmd(containerId).exec();
         return "success";
@@ -172,16 +116,6 @@ public class DockerJava {
 
     @GetMapping("statusOfContainer")
     public String statusOfContainer(String containerId) {
-        DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
-        DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
-            .dockerHost(config.getDockerHost())
-            .sslConfig(config.getSSLConfig())
-            .maxConnections(100)
-            .connectionTimeout(Duration.ofSeconds(30))
-            .responseTimeout(Duration.ofSeconds(45))
-            .build();
-
-        DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
         log.info("status of container id:{}", containerId);
         dockerClient.statsCmd(containerId).exec(new ResultCallback<Statistics>() {
             @Override
@@ -209,6 +143,60 @@ public class DockerJava {
                 log.info("status cmd close");
             }
         });
+        return "success";
+    }
+
+    @GetMapping("inspectOfContainer")
+    public String inspectOfContainer(String containerId) {
+        try {
+            log.info("status of container id:{}", containerId);
+            InspectContainerResponse response = dockerClient.inspectContainerCmd(containerId)
+                .exec();
+            if (Boolean.TRUE.equals(response.getState().getRunning())) {
+                return JSONUtil.toJsonStr(response);
+            } else {
+                return "";
+            }
+
+        } catch (NotFoundException e) {
+            return "无此container";
+        }
+
+    }
+    @GetMapping("events")
+    public String events(String containerId) {
+        ResultCallback<Event> resultCallback = new ResultCallback<Event>() {
+            @Override
+            public void onStart(Closeable closeable) {
+                log.info("events start");
+            }
+
+            @Override
+            public void onNext(Event object) {
+                log.info("onNext:{}", JSONUtil.toJsonStr(object));
+                if(object.getStatus().equals("stop")) {
+                    log.info("invoke close");
+                    throw new RuntimeException("time to stop");
+                }
+
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                log.error("events error");
+            }
+
+            @Override
+            public void onComplete() {
+                log.info("events complete");
+            }
+
+            @Override
+            public void close() throws IOException {
+                log.error("events close");
+            }
+        };
+        dockerClient.eventsCmd().withContainerFilter(containerId).exec(resultCallback);
         return "success";
     }
 }
