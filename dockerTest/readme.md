@@ -11,3 +11,6 @@
   - 安装docker-nvidia问题：
     - 疑难解答最简单的一个文章：https://www.jianshu.com/p/72b38cf34259
     - https://github.com/NVIDIA/nvidia-docker
+  - 通过nvidia-docker获取nvidia信息
+    - sudo docker run --rm --gpus all nvidia/cuda:10.0-base nvidia-smi
+    - https://github.com/NVIDIA/nvidia-docker

@@ -7,6 +7,8 @@ import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.Device;
+import com.github.dockerjava.api.model.DeviceRequest;
 import com.github.dockerjava.api.model.Event;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.HostConfig;
@@ -90,15 +92,19 @@ public class DockerJava {
     }
 
     @GetMapping("createContainer")
-    public String createContainer(String image, int port) {
-
+    public String createContainer(String image, int port, String gpuId) {
+        DeviceRequest deviceRequest = new DeviceRequest();
+        deviceRequest.withCapabilities(List.of(List.of("gpu")));
+        deviceRequest.withDeviceIds(List.of(gpuId));
         CreateContainerResponse response = dockerClient.createContainerCmd(image)
             .withExposedPorts(ExposedPort.tcp(port))
             .withHostConfig(
                 HostConfig.newHostConfig()
                     .withNetworkMode("host")
                     .withPortBindings(PortBinding.parse(String.format("%s:%s", port, port)))
-                    .withDevices()
+                    .withDeviceRequests(List.of(
+                        deviceRequest
+                    ))
             )
             .withLabels(Map.of("taskId", "123456"))
             .exec();
