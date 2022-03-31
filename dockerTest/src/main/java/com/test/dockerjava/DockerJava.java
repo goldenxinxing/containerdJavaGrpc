@@ -99,6 +99,7 @@ public class DockerJava {
 
         deviceRequest.withCapabilities(new ArrayList<List<String>>(){{add(new ArrayList<String>(){{add("gpu");}});}});
         deviceRequest.withDeviceIds(new ArrayList<String>(){{add(gpuId);}});
+        deviceRequest.withCount(1);
 
         Map<String, String> map = new HashMap<>();
         map.put("taskId", "123456");
