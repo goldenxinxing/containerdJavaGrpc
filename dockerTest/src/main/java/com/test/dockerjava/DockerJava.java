@@ -24,6 +24,7 @@ import com.github.dockerjava.transport.DockerHttpClient;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,6 +34,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import oshi.SystemInfo;
+import oshi.hardware.CentralProcessor;
+import oshi.hardware.GlobalMemory;
 
 @Slf4j
 @RestController
@@ -79,6 +83,69 @@ public class DockerJava {
         return dockerClient.infoCmd().exec();
     }
 
+    @GetMapping("systemCpuInfo")
+    public void systemInfo() throws InterruptedException {
+        for (int i = 10; i > 0; i--) {
+            SystemInfo systemInfo = new SystemInfo();
+            CentralProcessor processor = systemInfo.getHardware().getProcessor();
+            long[] prevTicks = processor.getSystemCpuLoadTicks();
+            long[] ticks = processor.getSystemCpuLoadTicks();
+            long nice = ticks[CentralProcessor.TickType.NICE.getIndex()]
+                - prevTicks[CentralProcessor.TickType.NICE.getIndex()];
+            long irq = ticks[CentralProcessor.TickType.IRQ.getIndex()]
+                - prevTicks[CentralProcessor.TickType.IRQ.getIndex()];
+            long softirq = ticks[CentralProcessor.TickType.SOFTIRQ.getIndex()]
+                - prevTicks[CentralProcessor.TickType.SOFTIRQ.getIndex()];
+            long steal = ticks[CentralProcessor.TickType.STEAL.getIndex()]
+                - prevTicks[CentralProcessor.TickType.STEAL.getIndex()];
+            long cSys = ticks[CentralProcessor.TickType.SYSTEM.getIndex()]
+                - prevTicks[CentralProcessor.TickType.SYSTEM.getIndex()];
+            long user = ticks[CentralProcessor.TickType.USER.getIndex()]
+                - prevTicks[CentralProcessor.TickType.USER.getIndex()];
+            long iowait = ticks[CentralProcessor.TickType.IOWAIT.getIndex()]
+                - prevTicks[CentralProcessor.TickType.IOWAIT.getIndex()];
+            long idle = ticks[CentralProcessor.TickType.IDLE.getIndex()]
+                - prevTicks[CentralProcessor.TickType.IDLE.getIndex()];
+            long totalCpu = user + nice + cSys + idle + iowait + irq + softirq + steal;
+
+            log.info("CPU总数 = {},CPU利用率 ={}", processor.getLogicalProcessorCount(),
+                new DecimalFormat("#.##%").format(1.0 - (idle * 1.0 / totalCpu)));
+            Thread.sleep(1000);
+        }
+    }
+
+    @GetMapping("systemMemInfo")
+    public void systemMemInfo() throws InterruptedException {
+        for (int i = 10; i > 0; i--) {
+            SystemInfo systemInfo = new SystemInfo();
+            GlobalMemory memory = systemInfo.getHardware().getMemory();
+            long totalByte = memory.getTotal();
+            long acaliableByte = memory.getAvailable();
+
+            log.info("内存大小 = {},内存使用率 ={}", formatByte(totalByte),
+                new DecimalFormat("#.##%").format((totalByte - acaliableByte) * 1.0 / totalByte));
+            Thread.sleep(1000);
+        }
+    }
+
+    public static String formatByte(long byteNumber) {
+        double FORMAT = 1024.0;
+        double kbNumber = byteNumber / FORMAT;
+        if (kbNumber < FORMAT) {
+            return new DecimalFormat("#.##KB").format(kbNumber);
+        }
+        double mbNumber = kbNumber / FORMAT;
+        if (mbNumber < FORMAT) {
+            return new DecimalFormat("#.##MB").format(mbNumber);
+        }
+        double gbNumber = mbNumber / FORMAT;
+        if (gbNumber < FORMAT) {
+            return new DecimalFormat("#.##GB").format(gbNumber);
+        }
+        double tbNumber = gbNumber / FORMAT;
+        return new DecimalFormat("#.##TB").format(tbNumber);
+    }
+
     @GetMapping("listImage")
     public List<Image> listImage() {
         List<Image> imageList = dockerClient.listImagesCmd().exec();
@@ -97,8 +164,14 @@ public class DockerJava {
     public String createContainer(String image, int port, String gpuId) {
         DeviceRequest deviceRequest = new DeviceRequest();
 
-        deviceRequest.withCapabilities(new ArrayList<List<String>>(){{add(new ArrayList<String>(){{add("gpu");}});}});
-        deviceRequest.withDeviceIds(new ArrayList<String>(){{add(gpuId);}});
+        deviceRequest.withCapabilities(new ArrayList<List<String>>() {{
+            add(new ArrayList<String>() {{
+                add("gpu");
+            }});
+        }});
+        deviceRequest.withDeviceIds(new ArrayList<String>() {{
+            add(gpuId);
+        }});
         deviceRequest.withCount(1);
 
         Map<String, String> map = new HashMap<>();
@@ -109,7 +182,9 @@ public class DockerJava {
                 HostConfig.newHostConfig()
                     .withNetworkMode("host")
                     .withPortBindings(PortBinding.parse(String.format("%s:%s", port, port)))
-                    .withDeviceRequests(new ArrayList<DeviceRequest>(){{add(deviceRequest);}})
+                    .withDeviceRequests(new ArrayList<DeviceRequest>() {{
+                        add(deviceRequest);
+                    }})
             )
             .withLabels(map)
             .exec();
@@ -174,6 +249,7 @@ public class DockerJava {
         }
 
     }
+
     @GetMapping("events")
     public String events(String containerId) {
         ResultCallback<Event> resultCallback = new ResultCallback<Event>() {
@@ -185,7 +261,7 @@ public class DockerJava {
             @Override
             public void onNext(Event object) {
                 log.info("onNext:{}", JSONUtil.toJsonStr(object));
-                if(object.getStatus().equals("stop")) {
+                if (object.getStatus().equals("stop")) {
                     log.info("invoke close");
                     throw new RuntimeException("time to stop");
                 }
