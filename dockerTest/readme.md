@@ -8,3 +8,6 @@
   - cuda 和 gpu关系？
   - 如何在docker-client中配置gpu quota？
   - 如何获取nvidia gpu信息：https://blog.csdn.net/qq_36874177/article/details/109534115
+  - 安装docker-nvidia问题：
+    - 疑难解答最简单的一个文章：https://www.jianshu.com/p/72b38cf34259
+    - https://github.com/NVIDIA/nvidia-docker
