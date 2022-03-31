@@ -25,6 +25,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -94,17 +95,16 @@ public class DockerJava {
     @GetMapping("createContainer")
     public String createContainer(String image, int port, String gpuId) {
         DeviceRequest deviceRequest = new DeviceRequest();
-        deviceRequest.withCapabilities(List.of(List.of("gpu")));
-        deviceRequest.withDeviceIds(List.of(gpuId));
+
+        deviceRequest.withCapabilities(new ArrayList<>(){{add(new ArrayList<>(){{add("gpu");}});}});
+        deviceRequest.withDeviceIds(new ArrayList<>(){{add(gpuId);}});
         CreateContainerResponse response = dockerClient.createContainerCmd(image)
             .withExposedPorts(ExposedPort.tcp(port))
             .withHostConfig(
                 HostConfig.newHostConfig()
                     .withNetworkMode("host")
                     .withPortBindings(PortBinding.parse(String.format("%s:%s", port, port)))
-                    .withDeviceRequests(List.of(
-                        deviceRequest
-                    ))
+                    .withDeviceRequests(new ArrayList<>(){{add(deviceRequest);}})
             )
             .withLabels(Map.of("taskId", "123456"))
             .exec();
