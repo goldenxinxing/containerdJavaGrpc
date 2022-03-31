@@ -14,3 +14,5 @@
   - 通过nvidia-docker获取nvidia信息
     - sudo docker run --rm --gpus all nvidia/cuda:10.0-base nvidia-smi
     - https://github.com/NVIDIA/nvidia-docker
+- docker 获取宿主机系统信息
+  - 目前看不太可能：https://stackoverflow.com/questions/29881960/is-it-possible-to-get-host-details-from-within-docker-container
