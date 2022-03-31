@@ -96,15 +96,15 @@ public class DockerJava {
     public String createContainer(String image, int port, String gpuId) {
         DeviceRequest deviceRequest = new DeviceRequest();
 
-        deviceRequest.withCapabilities(new ArrayList<>(){{add(new ArrayList<>(){{add("gpu");}});}});
-        deviceRequest.withDeviceIds(new ArrayList<>(){{add(gpuId);}});
+        deviceRequest.withCapabilities(new ArrayList<List<String>>(){{add(new ArrayList<String>(){{add("gpu");}});}});
+        deviceRequest.withDeviceIds(new ArrayList<String>(){{add(gpuId);}});
         CreateContainerResponse response = dockerClient.createContainerCmd(image)
             .withExposedPorts(ExposedPort.tcp(port))
             .withHostConfig(
                 HostConfig.newHostConfig()
                     .withNetworkMode("host")
                     .withPortBindings(PortBinding.parse(String.format("%s:%s", port, port)))
-                    .withDeviceRequests(new ArrayList<>(){{add(deviceRequest);}})
+                    .withDeviceRequests(new ArrayList<DeviceRequest>(){{add(deviceRequest);}})
             )
             .withLabels(Map.of("taskId", "123456"))
             .exec();
