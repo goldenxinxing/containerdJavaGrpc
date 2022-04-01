@@ -1,6 +1,8 @@
 package com.test.dockerjava;
 
 import cn.hutool.json.JSONUtil;
+import cn.hutool.system.oshi.CpuInfo;
+import cn.hutool.system.oshi.OshiUtil;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
@@ -114,7 +116,15 @@ public class DockerJava {
         }
     }
 
+    @GetMapping("getHutoolCpuInfo")
+    public CpuInfo getHutoolCpuInfo() {
+        return OshiUtil.getCpuInfo();
+    }
+
     public static void main(String[] args) {
+        log.info("cpu info:{}", JSONUtil.toJsonStr(OshiUtil.getCpuInfo()));
+    }
+    /*public static void main(String[] args) {
         SystemInfo systemInfo = new SystemInfo();
         CentralProcessor processor = systemInfo.getHardware().getProcessor();
         long[] prevTicks = processor.getSystemCpuLoadTicks();
@@ -139,7 +149,7 @@ public class DockerJava {
         log.info("idle总数= {}", idle);
         log.info("CPU总数 = {},CPU利用率 ={}", processor.getLogicalProcessorCount(),
             new DecimalFormat("#.##%").format(1.0 - (idle * 1.0 / totalCpu)));
-    }
+    }*/
     @GetMapping("systemMemInfo")
     public void systemMemInfo() throws InterruptedException {
         for (int i = 10; i > 0; i--) {
