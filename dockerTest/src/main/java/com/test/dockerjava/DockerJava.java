@@ -250,6 +250,7 @@ public class DockerJava {
                         add(deviceRequest);
                     }})
             )
+            .withCmd("nvidia-smi")
             .withLabels(map)
             .exec();
         log.info("container id:{}", response.getId());
