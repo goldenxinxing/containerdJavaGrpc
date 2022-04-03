@@ -227,6 +227,35 @@ public class DockerJava {
         return response.getId();
     }
 
+    @GetMapping("createContainerForNvidia")
+    public String createContainerForNvidia(String image, String gpuId) {
+        DeviceRequest deviceRequest = new DeviceRequest();
+
+        deviceRequest.withCapabilities(new ArrayList<List<String>>() {{
+            add(new ArrayList<String>() {{
+                add("gpu");
+            }});
+        }});
+        deviceRequest.withDeviceIds(new ArrayList<String>() {{
+            add(gpuId);
+        }});
+
+        Map<String, String> map = new HashMap<>();
+        map.put("taskId", "123456");
+        CreateContainerResponse response = dockerClient.createContainerCmd(image)
+            .withHostConfig(
+                HostConfig.newHostConfig()
+                    .withNetworkMode("host")
+                    .withDeviceRequests(new ArrayList<DeviceRequest>() {{
+                        add(deviceRequest);
+                    }})
+            )
+            .withLabels(map)
+            .exec();
+        log.info("container id:{}", response.getId());
+        return response.getId();
+    }
+
     @GetMapping("startContainer")
     public String startContainer(String containerId) {
 
