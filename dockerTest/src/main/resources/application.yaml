@@ -1,2 +1,4 @@
 server:
   port: 8083
+test:
+  param: ${TEST_PARAM:http://localhost:8080/}

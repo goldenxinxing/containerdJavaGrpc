@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import oshi.SystemInfo;
@@ -44,8 +45,16 @@ import oshi.hardware.GlobalMemory;
 @RestController
 public class DockerJava {
 
+    @Value("${test.param:default}")
+    private String param;
+
     @Autowired
     private DockerClient dockerClient;
+
+    @GetMapping("springbootParam")
+    public String springBootParam() {
+        return param;
+    }
 
     @GetMapping("jvmUsage")
     public String usage() {
