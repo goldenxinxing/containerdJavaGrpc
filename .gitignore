@@ -25,3 +25,5 @@ hs_err_pid*
 /containerd-build/tmp/
 /.idea/
 /containerdTest/tmp/containerd_protos/github.com/containerd/containerd/
+/web-ui/node/
+/web-ui/node_modules/
