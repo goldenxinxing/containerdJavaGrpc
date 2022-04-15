@@ -23,9 +23,9 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import com.github.dockerjava.transport.DockerHttpClient;
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
+
+import java.io.*;
+import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -33,6 +33,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.compress.archivers.ArchiveEntry;
+import org.apache.commons.compress.archivers.ArchiveException;
+import org.apache.commons.compress.archivers.ArchiveInputStream;
+import org.apache.commons.compress.archivers.examples.Expander;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.archivers.tar.TarFile;
+import org.apache.commons.compress.utils.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,6 +57,15 @@ public class DockerJava {
 
     @Autowired
     private DockerClient dockerClient;
+
+    @GetMapping("test/tar")
+    public String testTar(String source, String targetDir) throws IOException, ArchiveException {
+//        File targetDir = new File("/home/star_ubuntu/testtar");
+//        String source = "/home/star_ubuntu/test.tar";
+        Expander expander = new Expander();
+        expander.expand(new TarFile(new File(source)), new File(targetDir));
+        return "sucdess";
+    }
 
     @GetMapping("springbootParam")
     public String springBootParam() {
