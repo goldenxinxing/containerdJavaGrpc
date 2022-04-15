@@ -62,8 +62,9 @@ public class DockerJava {
     public String testTar(String source, String targetDir) throws IOException, ArchiveException {
 //        File targetDir = new File("/home/star_ubuntu/testtar");
 //        String source = "/home/star_ubuntu/test.tar";
-        Expander expander = new Expander();
-        expander.expand(new TarFile(new File(source)), new File(targetDir));
+//        Expander2 expander = new Expander2();
+//        expander.expand(new TarFile(new File(source)), new File(targetDir));
+        MyTar.extractor(new FileInputStream(source), targetDir);
         return "sucdess";
     }
 
