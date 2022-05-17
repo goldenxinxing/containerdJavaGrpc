@@ -1,0 +1,9 @@
+[controller]
+vm01
+[dbserver]
+vm01
+[agent]
+vm01
+vm02
+vm03
+vm04

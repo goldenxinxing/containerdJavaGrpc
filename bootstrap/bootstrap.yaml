@@ -1,0 +1,15 @@
+---
+# bootstrap workflow
+- hosts: dbserver
+  roles:
+    - minio
+    - mysql
+
+- hosts: controller
+  roles:
+    - controller
+
+- hosts: agent
+  become: yes
+  roles:
+    - agent
