@@ -8,38 +8,16 @@ import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
-import com.github.dockerjava.api.model.Container;
-import com.github.dockerjava.api.model.Device;
-import com.github.dockerjava.api.model.DeviceRequest;
-import com.github.dockerjava.api.model.Event;
-import com.github.dockerjava.api.model.ExposedPort;
-import com.github.dockerjava.api.model.HostConfig;
-import com.github.dockerjava.api.model.Image;
-import com.github.dockerjava.api.model.Info;
-import com.github.dockerjava.api.model.PortBinding;
-import com.github.dockerjava.api.model.Statistics;
-import com.github.dockerjava.core.DefaultDockerClientConfig;
-import com.github.dockerjava.core.DockerClientConfig;
-import com.github.dockerjava.core.DockerClientImpl;
-import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
-import com.github.dockerjava.transport.DockerHttpClient;
+import com.github.dockerjava.api.model.*;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.text.DecimalFormat;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveException;
-import org.apache.commons.compress.archivers.ArchiveInputStream;
-import org.apache.commons.compress.archivers.examples.Expander;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.archivers.tar.TarFile;
-import org.apache.commons.compress.utils.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -57,6 +35,55 @@ public class DockerJava {
 
     @Autowired
     private DockerClient dockerClient;
+
+    private Map<String, ResultCallback<Frame>> offsets = new HashMap<>();
+
+    @GetMapping("test/log")
+    public String getLogByContainer(String containerId) {
+        ResultCallback<Frame> resultCallback = new ResultCallback<Frame>() {
+            @Override
+            public void onStart(Closeable closeable) {
+                log.info("on start");
+            }
+
+            @Override
+            public void onNext(Frame frame) {
+                log.info("on thread:{}, next:{}",Thread.currentThread().getId(), new String(frame.getPayload()));
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                log.info("on error:{}", throwable.getMessage());
+            }
+
+            @Override
+            public void onComplete() {
+                log.info("on complete");
+            }
+
+            @Override
+            public void close() throws IOException {
+                log.info("close");
+            }
+        };
+        ResultCallback<Frame> r = dockerClient
+                .logContainerCmd(containerId)
+                .withTailAll()
+                // .withTail(10) // 最近的多少条
+                .withFollowStream(true).withStdOut(true).withStdErr(true)
+                .exec(resultCallback);
+        offsets.put(containerId, r);
+        log.info("origin:{}", resultCallback);
+        log.info("result:{}", r);
+        return "success";
+    }
+
+    @GetMapping("test/closeLog")
+    public String close(String containerId) throws IOException {
+        offsets.get(containerId).close();
+        return "success";
+    }
+
 
     @GetMapping("test/tar")
     public String testTar(String source, String targetDir) throws IOException, ArchiveException {
@@ -226,14 +253,14 @@ public class DockerJava {
     public String createContainer(String image, int port, String gpuId) {
         DeviceRequest deviceRequest = new DeviceRequest();
 
-        deviceRequest.withCapabilities(new ArrayList<List<String>>() {{
+        /*deviceRequest.withCapabilities(new ArrayList<List<String>>() {{
             add(new ArrayList<String>() {{
                 add("gpu");
             }});
         }});
         deviceRequest.withDeviceIds(new ArrayList<String>() {{
             add(gpuId);
-        }});
+        }});*/
 
         Map<String, String> map = new HashMap<>();
         map.put("taskId", "123456");
@@ -243,9 +270,9 @@ public class DockerJava {
                 HostConfig.newHostConfig()
                     .withNetworkMode("host")
                     .withPortBindings(PortBinding.parse(String.format("%s:%s", port, port)))
-                    .withDeviceRequests(new ArrayList<DeviceRequest>() {{
+                    /*.withDeviceRequests(new ArrayList<DeviceRequest>() {{
                         add(deviceRequest);
-                    }})
+                    }})*/
             )
             .withLabels(map)
             .exec();
