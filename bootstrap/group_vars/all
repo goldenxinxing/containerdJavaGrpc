@@ -1,12 +1,17 @@
+# base
+base_root_path: /mnt/data/starwhale-b
+sw_version: latest
+sw_repository: starwhaleai # or else ghcr.io/star-whale
+
 # mysql
 mysql_image: mysql:8.0-debian
 mysql_port: '3406'
 mysql_root_pwd: starwhale
-mysql_data_dir: /mnt/data/starwhale-b/local-storage-mysql
+mysql_data_dir: '{{ base_root_path }}/local-storage-mysql'
 
 # minio
 minio_image: quay.io/minio/minio
-minio_data_dir: /mnt/data/starwhale-b/local-storage
+minio_data_dir: '{{ base_root_path }}/local-storage'
 minio_default_bucket: starwhale
 minio_access_key: minioadmin
 minio_secret_key: minioadmin
@@ -16,15 +21,15 @@ minio_server_port: 9000
 minio_console_port: 9001
 
 # controller variables
-controller_image: 'ghcr.io/star-whale/server:0.1.2-alpha.5'
+controller_image: '{{ sw_repository }}/server:{{ sw_version }}'
 controller_task_split_num: '2'
 controller_port: '8182'
 
 # agent variables
 # agent
-agent_image: ghcr.io/star-whale/server:0.1.2-alpha.5
+agent_image: '{{ sw_repository }}/server:{{ sw_version }}'
 # task storage dir
-agent_data_dir: /mnt/data/starwhale-b/agent/run
+agent_data_dir: '{{ base_root_path }}/agent/run'
 # pypi url
 pypi_index_url: http://10.131.0.1:3141/root/pypi-douban/+simple/
 # pypi extra url
@@ -33,6 +38,6 @@ pypi_extra_index_url: https://pypi.tuna.tsinghua.edu.cn/simple/
 pypi_trusted_host: '10.131.0.1 pypi.tuna.tsinghua.edu.cn'
 
 # taskset
-taskset_image: ghcr.io/star-whale/taskset:0.1.1
-taskset_docker_port: '2376'
-taskset_dind_dir: /mnt/data/starwhale-b/agent/dind
+taskset_image: '{{ sw_repository }}/taskset:{{ sw_version }}'
+taskset_docker_port: '2676'
+taskset_dind_dir: '{{ base_root_path }}/agent/dind'

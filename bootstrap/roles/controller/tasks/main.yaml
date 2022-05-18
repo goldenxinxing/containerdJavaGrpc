@@ -4,6 +4,7 @@
   community.docker.docker_container:
     name: controller_by_bootstrap
     image: "{{ controller_image }}"
+    pull: true
     restart_policy: always
     ports:
       - "{{ controller_port }}:8082"
