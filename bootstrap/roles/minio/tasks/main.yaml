@@ -1,11 +1,11 @@
 ---
 # If forcereinstall is removed, you may get an error i.e. no module found
 #
-- name: "Force Install 'docker' pip module"
-  pip:
-    name: docker
-    extra_args: "--no-index --find-links=/usr/bin/python3"
-    state: forcereinstall
+#- name: "Force Install 'docker' pip module"
+#  pip:
+#    name: docker
+#    extra_args: "--no-index --find-links=/usr/bin/python3"
+#    state: forcereinstall
 # minio container
 - name: add default bucket
   become: true
@@ -20,6 +20,7 @@
   community.docker.docker_container:
     name: minio_by_bootstrap
     image: "{{ minio_image }}"
+    command: "server /data --console-address ':{{ minio_console_port }}'"
     state: started
     pull: true
     restart_policy: always
@@ -30,5 +31,5 @@
       MINIO_ROOT_USER: "{{ minio_access_key }}"
       MINIO_ROOT_PASSWORD: "{{ minio_secret_key }}"
       MINIO_BUCKET: "{{ minio_default_bucket }}"
-    volumes: # todo validate whether is '/data'
+    volumes:
     - "{{ minio_data_dir }}:/data"

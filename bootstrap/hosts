@@ -1,9 +1,9 @@
 [controller]
-vm01
-[dbserver]
-vm01
+controller.starwhale.com
+[storage]
+storage.starwhale.com
 [agent]
-vm01
-vm02
-vm03
-vm04
+agent01.starwhale.com
+agent02.starwhale.com
+agent03.starwhale.com
+agent04.starwhale.com

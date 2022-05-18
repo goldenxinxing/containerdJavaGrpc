@@ -4,7 +4,7 @@
 - name: start mysql
   community.docker.docker_container:
     name: mysql_by_bootstrap
-    image: "{ { mysql_image } }"
+    image: "{{ mysql_image }}"
     state: started
     pull: true
     restart_policy: always
