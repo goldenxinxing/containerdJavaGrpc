@@ -28,3 +28,6 @@
   - edit the hosts file at your machine,the same with above example
   - `make check {sudoer}`
   - `make play {sudoer}`
+- pip upload tutorials
+  - https://packaging.python.org/en/latest/tutorials/packaging-projects/
+  - https://pip.pypa.io/en/stable/reference/build-system/

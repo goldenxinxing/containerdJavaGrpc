@@ -4,8 +4,8 @@ install:
 
 # make check {your admin name}
 check:
-	ansible-playbook bootstrap.yaml -i hosts --user $(1) --check
+	ansible-playbook bootstrap.yaml -i hosts --user $(user) --check
 
 # make play {your admin name}
 play:
-	ansible-playbook bootstrap.yaml -i hosts --user $(1)
+	ansible-playbook bootstrap.yaml -i hosts --user $(user)
