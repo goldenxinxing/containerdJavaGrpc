@@ -1,5 +1,7 @@
-import ansible_runner
+import os
+import sys
 
+import ansible_runner
 
 #
 # # base
@@ -45,7 +47,6 @@ import ansible_runner
 # taskset_image = '{{ sw_repository }}/taskset:' + sw_version
 # taskset_docker_port = '2676'
 # taskset_dind_dir = base_root_path + '/agent/dind'
-
 
 config = {
     # base
@@ -93,15 +94,15 @@ config = {
 }
 
 
-# from src import ABSPATH
 def deploy():
     # todo tmp
-    ABSPATH = '/mnt/c/Users/gaoxinxing/IdeaProjects/containerdJavaGrpc/bootstrap/'
+    cur_path = os.path.abspath(os.path.dirname(__file__))
+    # ABSPATH = '/mnt/c/Users/gaoxinxing/IdeaProjects/containerdJavaGrpc/bootstrap/'
     # 可参考：https://gist.github.com/privateip/879683a0172415c408fb2afb82a97511
     r = ansible_runner.run(
         private_data_dir='/var/starwhale/tmp',
-        playbook=ABSPATH + 'src/playbook/bootstrap.yaml',
-        roles_path=ABSPATH + 'src/playbook/roles',
+        playbook=cur_path + '/playbook/bootstrap.yaml',
+        roles_path=cur_path + '/playbook/roles',
         extravars={
             # base
             'base_root_path': '/mnt/data/starwhale-b',
@@ -169,10 +170,6 @@ def deploy():
         print(each_host_event['event'])
     print("Final status:")
     print(r.stats)
-
-
-class AnsibleRunner:
-    pass
 
 # run ansible/generic commands in interactive mode within container
 # out, err, rc = ansible_runner.run_command(
