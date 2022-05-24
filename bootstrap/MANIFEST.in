@@ -1,1 +1,1 @@
-recursive-include src/main/playbook/ *.yaml
+recursive-include bootstrap/playbook/ *.yaml

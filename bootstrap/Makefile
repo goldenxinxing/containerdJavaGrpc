@@ -11,7 +11,8 @@ build-wheel: check clean
 	ls -alh dist
 
 upload-pypi:
-	twine upload dist/*
+	#twine upload dist/*
+	python3 -m twine upload --repository pypi dist/* --verbose
 
 install-sw:
 	#python3 -m pip install -e .
