@@ -45,8 +45,8 @@ install:
 
 # make check {your admin name}
 check2:
-	ansible-playbook bootstrap.yaml -i hosts --user $(user) --check
+	ansible-playbook demo/project/bootstrap.yaml -i demo/inventory/hostsDemo --user $(user) --check
 
 # make play {your admin name}
 play:
-	ansible-playbook bootstrap.yaml -i hosts --user $(user)
+	ansible-playbook demo/project/bootstrap.yaml -i demo/inventory/hostsDemo --user $(user)

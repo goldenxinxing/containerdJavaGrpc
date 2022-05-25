@@ -11,7 +11,9 @@ def deploy(logdir: str = "",
     if not os.path.exists(logdir):
         os.makedirs(logdir)
     # for issue https://github.com/ansible/ansible-runner/issues/853
-    os.remove(logdir+'/inventory/hosts.json')
+    hostspath = logdir+'/inventory/hosts.json'
+    if os.path.exists(hostspath):
+        os.remove(hostspath)
 
     # ABSPATH = '/mnt/c/Users/gaoxinxing/IdeaProjects/containerdJavaGrpc/bootstrap/'
     # 可参考：https://gist.github.com/privateip/879683a0172415c408fb2afb82a97511
