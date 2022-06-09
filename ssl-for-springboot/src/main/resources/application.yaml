@@ -1,0 +1,9 @@
+server:
+  ssl:
+    key-store: classpath:gxx.p12
+    key-store-password: starwhale
+    key-store-type: pkcs12
+    key-alias: starwhale
+    key-password: starwhale
+    enabled: true
+  port: 8443
