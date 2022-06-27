@@ -7,3 +7,6 @@ server:
     key-password: starwhale
     enabled: true
   port: 8443
+spring:
+  banner:
+    location: classpath:banner.txt
