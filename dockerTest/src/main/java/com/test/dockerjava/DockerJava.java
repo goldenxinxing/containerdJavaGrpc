@@ -7,6 +7,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.*;
 
@@ -16,6 +17,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.ArchiveException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -250,8 +253,9 @@ public class DockerJava {
     }
 
     @GetMapping("createContainer")
-    public String createContainer(String image, int port, String gpuId) {
-        DeviceRequest deviceRequest = new DeviceRequest();
+    public String createContainer(String image, int port, long timeout) {
+        try{
+            DeviceRequest deviceRequest = new DeviceRequest();
 
         /*deviceRequest.withCapabilities(new ArrayList<List<String>>() {{
             add(new ArrayList<String>() {{
@@ -262,22 +266,37 @@ public class DockerJava {
             add(gpuId);
         }});*/
 
-        Map<String, String> map = new HashMap<>();
-        map.put("taskId", "123456");
-        CreateContainerResponse response = dockerClient.createContainerCmd(image)
-            .withExposedPorts(ExposedPort.tcp(port))
-            .withHostConfig(
-                HostConfig.newHostConfig()
-                    .withNetworkMode("host")
-                    .withPortBindings(PortBinding.parse(String.format("%s:%s", port, port)))
+            Map<String, String> map = new HashMap<>();
+            map.put("taskId", "123456");
+            CreateContainerResponse response = dockerClient.createContainerCmd(image)
+                    .withExposedPorts(ExposedPort.tcp(port))
+                    .withHostConfig(
+                            HostConfig.newHostConfig()
+                                    .withNetworkMode("host")
+                                    .withPortBindings(PortBinding.parse(String.format("%s:%s", port, port)))
                     /*.withDeviceRequests(new ArrayList<DeviceRequest>() {{
                         add(deviceRequest);
                     }})*/
-            )
-            .withLabels(map)
-            .exec();
-        log.info("container id:{}", response.getId());
-        return response.getId();
+                    )
+                    .withLabels(map)
+                    .exec();
+            log.info("container id:{}", response.getId());
+            return response.getId();
+        } catch (NotFoundException e) {
+            log.error("image:{} not found at local, try to pull from remote", image);
+            try {
+                pullImage(image, timeout);
+                // one more again
+
+            } catch (Exception ex) {
+                log.error("pulling occur unknown error:{}", ex.getMessage(), ex);
+            }
+            return "again pull";
+        }
+
+    }
+    private void pullImage(String image, Long timeout) throws InterruptedException {
+        dockerClient.pullImageCmd(image).exec(new PullImageResultCallback()).awaitCompletion(timeout, TimeUnit.MILLISECONDS);
     }
 
     @GetMapping("createContainerForNvidia")
